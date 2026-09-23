@@ -91,9 +91,17 @@ function draw() {
     text(counter + '/10', width - 20, 20);
 }
 
-// function mousePressed() {
-//     launchBalls();
-// }
+// First click enters fullscreen (browsers block auto-fullscreen on load,
+// it must be triggered by a user gesture)
+function mousePressed() {
+    if (!fullscreen()) {
+        fullscreen(true);
+    }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
 
 // Launches 10 black balls from the left edge, shooting toward +x
 function launchBalls() {
