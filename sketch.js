@@ -88,7 +88,7 @@ function draw() {
     applyAttractor();
     checkCollector();
 
-    background(220);
+    background(255);
 
     // Draw all circles
     fill(0);
