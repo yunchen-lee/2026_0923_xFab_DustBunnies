@@ -218,9 +218,9 @@ function keyPressed() {
 // Blow an upward gust from (width/2, height), only within a 30-degree
 // cone (to each side of straight up) that pushes nearby circles up
 function blowWind() {
-    let source = createVector(random([width / 4, width / 4 * 3]), height / 4 * 5);
+    let source = createVector(random([width / 5, width / 4, width / 2, width / 4 * 3, width / 5 * 4]), height / 4 * 5);
     let radius = height; // how far the gust reaches
-    let strength = random([0.3, 0.7, 0.8, 0.9, 1]); // force magnitude at the source
+    let strength = random([0.7, 1, 1.5]); // force magnitude at the source
     let halfAngle = radians(random(15, 40)); // cone half-angle from straight up
 
     for (let body of circles) {
