@@ -192,7 +192,7 @@ function launchBalls() {
     for (let i = 0; i < 10; i++) {
         // 觸角長度要先決定，才能算出涵蓋 80% 觸角的碰撞半徑
         let rayLengths = [];
-        for (let j = 0; j < 10; j++) {
+        for (let j = 0; j < 8; j++) {
             rayLengths.push(random(6, 16));
         }
         let maxReach = 12 + Math.max(...rayLengths); // 球心到最長觸角尖端
@@ -329,7 +329,7 @@ function onMessageArrived(message) {
 
     if (incomingTopic === topicSound) {
         console.log('sound value: ' + payload);
-        if (int(payload) > 3850) {
+        if (int(payload) > 3650) {
 
             launchBalls();
 
