@@ -329,7 +329,7 @@ function onMessageArrived(message) {
 
     if (incomingTopic === topicSound) {
         console.log('sound value: ' + payload);
-        if (int(payload) > 3000) {
+        if (int(payload) > 3850) {
 
             launchBalls();
 
