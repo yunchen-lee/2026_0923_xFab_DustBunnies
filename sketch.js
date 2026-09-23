@@ -5,6 +5,10 @@ let broker = {
 };
 
 
+let lastMotorTriggerTime = -Infinity;
+const MOTOR_TRIGGER_COOLDOWN_MS = 3000;
+
+
 // MQTT client:
 let client;
 
@@ -169,6 +173,17 @@ function windowResized() {
     createBoundaries();
 }
 
+
+function tryTriggerMotor() {
+    let now = millis();
+    if (now - lastMotorTriggerTime >= MOTOR_TRIGGER_COOLDOWN_MS) {
+        triggerMotor('trigger');
+        lastMotorTriggerTime = now;
+    } else {
+        console.log('Motor trigger skipped (still in cooldown)');
+    }
+}
+
 // Launches 10 black balls from the left edge, shooting toward +x
 function launchBalls() {
     let originX = 0;
@@ -276,9 +291,14 @@ function checkCollector() {
             circles.splice(i, 1);
             counter++;
 
+            // if (counter > 10) {
+            //     triggerMotor('trigger');
+            //     counter = 0;
+            // }
+
             if (counter > 10) {
-                triggerMotor('trigger');
                 counter = 0;
+                tryTriggerMotor();
             }
         }
     }
@@ -309,7 +329,13 @@ function onMessageArrived(message) {
 
     if (incomingTopic === topicSound) {
         console.log('sound value: ' + payload);
-        launchBalls();
+        if (int(payload) > 3000) {
+
+            launchBalls();
+
+        }
+
+
     } else if (incomingTopic === topicBtn) {
         console.log('button triggered: ' + payload);
         blowWind();
