@@ -28,6 +28,7 @@ const Body = Matter.Body;
 let engine;
 let circles = [];
 let counter = 0;
+let ground, leftWall, rightWall;
 
 
 function setup() {
@@ -53,16 +54,29 @@ function setup() {
     // Matter.js
     engine = Engine.create();
 
-    // Ground
-    let ground = Bodies.rectangle(
+    createBoundaries();
+
+    // Lighter gravity for a floaty, dust-like fall
+    engine.world.gravity.y = 0.4;
+}
+
+// Ground + left/right walls, sized to the current canvas
+function createBoundaries() {
+    ground = Bodies.rectangle(
         width / 2, height - 10,
         width, 20, { isStatic: true }
     );
 
-    World.add(engine.world, ground);
+    leftWall = Bodies.rectangle(-20, height / 2,
+        20, height, { isStatic: true }
+    );
 
-    // Lighter gravity for a floaty, dust-like fall
-    engine.world.gravity.y = 0.4;
+    rightWall = Bodies.rectangle(
+        width + 20, height / 2,
+        20, height, { isStatic: true }
+    );
+
+    World.add(engine.world, [ground, leftWall, rightWall]);
 }
 
 function draw() {
@@ -77,12 +91,61 @@ function draw() {
     noStroke();
 
     for (let body of circles) {
-        circle(
-            body.position.x,
-            body.position.y,
-            30
-        );
+        // 初始化這顆球的眨眼計時器
+        if (body.nextBlink === undefined) {
+            body.nextBlink = millis() + random(1000, 4000);
+            body.blinking = false;
+        }
+
+        // 眨眼排程：時間到就開始眨眼，眨完排下一次
+        if (!body.blinking && millis() > body.nextBlink) {
+            body.blinking = true;
+            body.blinkEnd = millis() + 120;
+        }
+        if (body.blinking && millis() > body.blinkEnd) {
+            body.blinking = false;
+            body.nextBlink = millis() + random(5000, 20000);
+        }
+
+        push();
+        translate(body.position.x, body.position.y);
+        rotate(body.angle);
+
+        fill(body.shade);
+        circle(0, 0, 30);
+
+        // 放射狀小太陽觸角
+        push();
+        noStroke();
+        fill(body.shade);
+        for (let i = 0; i < 10; i++) {
+            rotate(PI / 5);
+            rect(12, -2.5, body.rayLengths[i], 3, 3);
+        }
+        pop();
+
+        if (body.blinking) {
+            // 閉眼：畫兩條線
+            stroke(0);
+            strokeWeight(2);
+            line(-8, -3, -2, -3);
+            line(2, -3, 8, -3);
+            noStroke();
+        } else {
+            // 眼睛
+            fill(255);
+            circle(-5, -3, 6);
+            circle(5, -3, 6);
+
+            fill(0);
+            circle(-5, -3, 3);
+            circle(5, -3, 3);
+        }
+
+
+        pop();
     }
+
 
     // Counter display, top-right corner
     fill(0);
@@ -101,6 +164,9 @@ function mousePressed() {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+
+    World.remove(engine.world, [ground, leftWall, rightWall]);
+    createBoundaries();
 }
 
 // Launches 10 black balls from the left edge, shooting toward +x
@@ -109,16 +175,27 @@ function launchBalls() {
     let originY = height / 3 * 2;
 
     for (let i = 0; i < 10; i++) {
+        // 觸角長度要先決定，才能算出涵蓋 80% 觸角的碰撞半徑
+        let rayLengths = [];
+        for (let j = 0; j < 10; j++) {
+            rayLengths.push(random(6, 16));
+        }
+        let maxReach = 12 + Math.max(...rayLengths); // 球心到最長觸角尖端
+        let physicsRadius = maxReach * 0.8;
+
         let body = Bodies.circle(
             originX,
             originY + random(-10, 10),
-            15, {
+            physicsRadius, {
                 restitution: 1,
                 friction: 0.01,
                 frictionAir: random(0.03, 0.08),
                 density: random(0.005, 0.01)
             }
         );
+
+        body.rayLengths = rayLengths;
+        body.shade = random([0, 50, 100, 120]);
 
         // launch to the right (+x)
         Body.setVelocity(body, { x: random(8, 14), y: random(-2, 2) });
@@ -135,6 +212,9 @@ function launchBalls() {
 //     }
 // }
 
+function keyPressed() {
+    launchBalls();
+}
 // Blow an upward gust from (width/2, height), only within a 30-degree
 // cone (to each side of straight up) that pushes nearby circles up
 function blowWind() {
